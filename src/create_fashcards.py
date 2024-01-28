@@ -1,18 +1,6 @@
 import genanki
 from read_db_csv import read_db_csv
-from utils import parse_word_match
-
-
-def preprocess_twi(database: list[list[str]]):
-    header = database[0]
-    twi_column = header.index("twi")
-    word_match_column = header.index("word_match")
-
-    for row in database:
-        for col in [twi_column, word_match_column]:
-            row[col] = row[col].replace(")", "ɔ")
-            row[col] = row[col].replace("3", "ɛ")
-    return database
+from utils import parse_word_match, preprocess_twi
 
 
 def colorcode_literal_translation(twi, eng_lit, word_match):
@@ -115,9 +103,9 @@ def create_flashcards(database: list[list[str]], out_path):
 
 
 if __name__ == '__main__':
-    db = read_db_csv("twi_test.csv")
+    db = read_db_csv("../twi_test.csv")
     db = preprocess_twi(db)
-    create_flashcards(db, "flashcards.apkg")
+    create_flashcards(db, "../flashcards.apkg")
 
 
 
