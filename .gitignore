@@ -1,0 +1,5 @@
+/secrets.txt
+/.idea
+/.venv
+*.apkg
+*.csv
