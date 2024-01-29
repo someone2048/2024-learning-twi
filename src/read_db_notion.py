@@ -1,9 +1,12 @@
+import csv
+import json
+
 from notion_client import Client
 
 
 NOTION_DB = "e51c23449ac34ecaa9f6e2702dc2524f"
-with open("secrets.txt") as f:
-    NOTION_TOKEN = f.read().strip()
+with open("notion_secrets.json") as f:
+    NOTION_TOKEN = json.load(f)["notion"]
 
 
 def fetch_notion_db(db_url, access_token):
@@ -23,6 +26,8 @@ def fetch_notion_db(db_url, access_token):
                 value = field['select']['name']
             elif field['type'] == 'relation':
                 value = [r['id'] for r in field['relation']]
+            elif field['type'] == 'checkbox':
+                value = field['checkbox']
             else:
                 raise TypeError("Unexpected field type")
             row.append(value)
@@ -34,3 +39,6 @@ if __name__ == "__main__":
     db = fetch_notion_db(NOTION_DB, NOTION_TOKEN)
     for r in db:
         print(",".join([str(i) for i in r]))
+    with open("twi.csv", "w") as f:
+        writer = csv.writer(f)
+        writer.writerows(db)

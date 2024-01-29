@@ -1,5 +1,6 @@
-/secrets.txt
+
 /.idea
 /.venv
 *.apkg
 *.csv
+**secrets.json
