@@ -4,8 +4,11 @@ from drive_upload import update_fash_cards_gdrive
 from utils import preprocess_twi
 
 if __name__ == '__main__':
-    db = fetch_notion_db(NOTION_DB, NOTION_TOKEN)
-    db = preprocess_twi(db)
-    create_flashcards(db, "flashcards.apkg")
+    print("fetching notion database")
+    df = fetch_notion_db(NOTION_DB, NOTION_TOKEN)
+    df.to_pickle("twi_vocabulary_df.pkl")
+    count = create_flashcards(df, "flashcards.apkg")
+    print(f"created {count} flashcards")
+    print("uploading flashcards")
     update_fash_cards_gdrive()
     print("done!")

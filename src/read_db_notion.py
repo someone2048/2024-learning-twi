@@ -1,8 +1,10 @@
 import csv
 import json
 
+import pandas as pd
 from notion_client import Client
 
+from src.utils import preprocess_twi
 
 NOTION_DB = "e51c23449ac34ecaa9f6e2702dc2524f"
 with open("notion_secrets.json") as f:
@@ -15,8 +17,8 @@ def fetch_notion_db(db_url, access_token):
 
     header = ["id"] + list(db_query['results'][0]['properties'].keys())
     database = [header]
-    assert db_query['has_more'] == False
-    for notion_row in db_query['results'][1:]:
+    assert db_query['has_more'] is False
+    for notion_row in db_query['results']:
         row = [notion_row['id']]
         for column in header[1:]:
             field = notion_row['properties'][column]
@@ -32,11 +34,14 @@ def fetch_notion_db(db_url, access_token):
                 raise TypeError("Unexpected field type")
             row.append(value)
         database.append(row)
-    return database
+
+    database = preprocess_twi(database)
+    return pd.DataFrame(database[1:], columns=database[0])
 
 
 if __name__ == "__main__":
     db = fetch_notion_db(NOTION_DB, NOTION_TOKEN)
+    print(len(db)-1)
     for r in db:
         print(",".join([str(i) for i in r]))
     with open("twi.csv", "w") as f:

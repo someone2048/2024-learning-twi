@@ -1,9 +1,10 @@
 import genanki
-from read_db_csv import read_db_csv
-from utils import parse_word_match, preprocess_twi
+import pandas as pd
+from src.read_db_notion import fetch_notion_db, NOTION_DB, NOTION_TOKEN
+from utils import parse_word_match
 
 
-def colorcode_literal_translation(twi, eng_lit, word_match):
+def color_literal_translation(twi, eng_lit, word_match):
     highlight_colors = [
         "gold",
         "darkorange",
@@ -47,65 +48,70 @@ def colorcode_literal_translation(twi, eng_lit, word_match):
     return twi_color, eng_lit_color
 
 
-def create_explanation_str(header, row):
-    twi_column = header.index("twi")
-    eng_lit_column = header.index("english_literal")
-    note_column = header.index("note")
-    word_match_column = header.index("word_match")
-    # examples_column = header.index("examples")
+def create_flashcard(df, word: str, language: str):
+    languages = ["twi", "english"]
+    translation_language = languages[languages.index(language) - 1]
+    translation_loc = df.index[df[language] == word]
+    formatted_translations = [format_translation(df, loc, translation_language) for loc in translation_loc]
 
-    explanation = ""
-    if row[eng_lit_column]:
-        lit_breakdown = row[eng_lit_column]
-        if row[word_match_column]:
-            twi_color, eng_lit_color = colorcode_literal_translation(row[twi_column],
-                                                                     row[eng_lit_column],
-                                                                     row[word_match_column])
-            lit_breakdown = f"{eng_lit_color}<br>{twi_color}"
+    front = f"{word}"
+    if len(formatted_translations) > 1:
+        back = ""
+        for i, trans in enumerate(formatted_translations, 1):
+            back += f"<b>{i})</b> {trans}<br>"
+    else:
+        back = formatted_translations[0]
 
-        explanation += f"<br><br><i>lit.:</i> {lit_breakdown}"
-    if row[note_column]:
-        explanation += f"<br><br><i style='color: lightslategray'>{row[note_column]}</i>"
-    # if row[example_column]:
-    #     explanation += f"<br><br><span style='color: lightslategray'>Examples</span><br>"
-    #     for example_id in row[example_column]:
-    #        example_row =
-    #        explanation += f"<i>{}</i>"
-
-    return explanation
+    return front, back
 
 
-def create_flashcards(database: list[list[str]], out_path):
-    twi_column = database[0].index("twi")
-    eng_column = database[0].index("english")
+def format_translation(df, row_index: int, translation_language: str):
+    translation = df.iloc[row_index][translation_language]
 
+    twi = df.iloc[row_index]["twi"]
+    english_literal = df.iloc[row_index]["english_literal"]
+
+    if english_literal:
+        word_match = df.iloc[row_index]["word_match"]
+        if word_match:
+            twi_color, eng_lit_color = color_literal_translation(twi, english_literal, word_match)
+            translation += f"<br><br><i>lit.:</i> {eng_lit_color}<br>{twi_color}"
+        else:
+            translation += f"<br><br><i>lit.:</i> {english_literal}"
+
+    note = df.iloc[row_index]["note"]
+    if note:
+        translation += f"<br><br><i style='color: lightslategray'>{note}</i>"
+
+    examples = df.iloc[row_index]["examples"]
+    if examples:
+        translation += f"<br><br><i><b>Examples:</b></i>"
+        for example_id in examples:
+            example_index = df.index[df["id"] == example_id][0]
+            translation += f"<br>{df.iloc[example_index]['twi']} → {df.iloc[example_index]['english']}"
+
+    return translation
+
+
+def create_flashcards(df: pd.DataFrame, out_path):
     anki_deck = genanki.Deck(11264, "Twi")
-
-    count = 0
-    for row in database[1:]:
-        explanation = create_explanation_str(database[0], row)
-
-        # twi -> english
-        twi_english = genanki.Note(
-            model=genanki.builtin_models.BASIC_MODEL,
-            fields=[row[twi_column], row[eng_column] + explanation])
-        anki_deck.add_note(twi_english)
-
-        # english -> twi
-        english_twi = genanki.Note(
-            model=genanki.builtin_models.BASIC_MODEL,
-            fields=[row[eng_column], row[twi_column] + explanation]
-        )
-        anki_deck.add_note(english_twi)
-        count += 1
-    print(f"Added {count} items, {count*2} nodes")
+    cards_count = 0
+    for language in ["twi", "english"]:
+        for word in df[language].unique():
+            front, back = create_flashcard(df, word, language)
+            twi_english = genanki.Note(
+                model=genanki.builtin_models.BASIC_MODEL,
+                fields=[front, back])
+            anki_deck.add_note(twi_english)
+            cards_count += 1
+            # print(f"<h3>{front}</h3><p>{back}</p>")
     anki_deck.write_to_file(out_path)
+    return cards_count
 
 
 if __name__ == '__main__':
-    db = read_db_csv("../twi_test.csv")
-    db = preprocess_twi(db)
-    create_flashcards(db, "../flashcards.apkg")
+    df = fetch_notion_db(NOTION_DB, NOTION_TOKEN)
+    create_flashcards(df, "flashcards_test.apkg")
 
 
 

@@ -3,17 +3,7 @@ from copy import deepcopy
 
 from utils import parse_word_match
 
-
-def preprocess_twi(database: list[list[str]]):
-    header = database[0]
-    twi_column = header.index("twi")
-    word_match_column = header.index("word_match")
-
-    for row in database:
-        for col in [twi_column, word_match_column]:
-            row[col] = row[col].replace(")", "ɔ")
-            row[col] = row[col].replace("3", "ɛ")
-    return database
+# TODO NEEDS REFACTOR TO DataFrame
 
 
 def recommend_examples(database):
