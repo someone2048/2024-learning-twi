@@ -62,7 +62,9 @@ def create_flashcard(df, word: str, language: str):
     else:
         back = formatted_translations[0]
 
-    return front, back
+    tags = [f"{language}", df.iloc[translation_loc]["type"].values[0]]
+
+    return front, back, tags
 
 
 def format_translation(df, row_index: int, translation_language: str):
@@ -93,15 +95,23 @@ def format_translation(df, row_index: int, translation_language: str):
     return translation
 
 
+class LanguageNote(genanki.Note):
+    @property
+    def guid(self):
+        return genanki.guid_for(self.fields[0])
+
+
 def create_flashcards(df: pd.DataFrame, out_path):
     anki_deck = genanki.Deck(11264, "Twi")
     cards_count = 0
     for language in ["twi", "english"]:
         for word in df[language].unique():
-            front, back = create_flashcard(df, word, language)
-            twi_english = genanki.Note(
+            front, back, tags = create_flashcard(df, word, language)
+            twi_english = LanguageNote(
                 model=genanki.builtin_models.BASIC_MODEL,
-                fields=[front, back])
+                fields=[front, back],
+                tags=tags
+            )
             anki_deck.add_note(twi_english)
             cards_count += 1
             # print(f"<h3>{front}</h3><p>{back}</p>")
@@ -112,6 +122,3 @@ def create_flashcards(df: pd.DataFrame, out_path):
 if __name__ == '__main__':
     df = fetch_notion_db(NOTION_DB, NOTION_TOKEN)
     create_flashcards(df, "flashcards_test.apkg")
-
-
-
