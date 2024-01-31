@@ -1,5 +1,4 @@
 from read_db_notion import *
-from copy import deepcopy
 
 from utils import parse_word_match
 
@@ -18,18 +17,24 @@ def recommend_examples(df: pd.DataFrame):
                 if twi.lower() == row["twi"].lower().strip():
                     # we don't care about literal translations here
                     if row["english"].lower().strip() in row2["english"].lower():
-                        print(f"{row['twi']} -> {row2['twi']} MATCH: TWI+ENG")
+                        print(f"{row['twi']}({row['english']}) -> {row2['twi']} MATCH: TWI+ENG")
                     else:
-                        print(f"{row['twi']} -> {row2['twi']} MATCH: TWI (only)")
+                        print(f"{row['twi']}({row['english']}) -> {row2['twi']} MATCH: TWI (only)")
 
 
-def auto_update_notion_twi_vocab_db(db_url, access_token):
-    data_old = fetch_notion_db(db_url, access_token)
-    data = deepcopy(data_old)
-    data = preprocess_twi(data)
-    recommend_examples(data)
+def check_for_malformed_entries(df: pd.DataFrame):
+    for i, row in df.iterrows():
+
+        if not row["type"] or not row["twi"] or not row["english"]:
+            print(f"MISSING KEY FIELD: {i}) {row['twi']}->{row['english']}")
+
+        try:
+            parse_word_match(row["word_match"])
+        except Exception:
+            print(f"WORD MATCH PARSING FAILURE: {i}) {row['twi']}->{row['english']}")
 
 
 if __name__ == '__main__':
     df = fetch_notion_db(NOTION_DB, NOTION_TOKEN)
+    check_for_malformed_entries(df)
     recommend_examples(df)

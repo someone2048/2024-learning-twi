@@ -1,7 +1,8 @@
 import os
+from datetime import datetime
 
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
+from pydrive2.auth import GoogleAuth
+from pydrive2.drive import GoogleDrive
 
 TOKEN_FILE_PATH = "gdrive_secrets.json"
 
@@ -23,7 +24,8 @@ def authenticate_drive():
 
 # Function to upload a new version of the file to Google Drive
 def update_drive_file(drive, file_id, local_file_path):
-    file_drive = drive.CreateFile({'id': file_id})
+    file_drive = drive.CreateFile({'id': file_id,
+                                   'title': f"flashcards-v{datetime.now().strftime('%Y%m%d')}.apkg"})
     file_drive.SetContentFile(local_file_path)
     file_drive.Upload()
 
@@ -35,3 +37,7 @@ def update_fash_cards_gdrive():
     drive = authenticate_drive()
     # Update the file on Google Drive with a new version
     update_drive_file(drive, file_id, local_file_path)
+
+
+if __name__ == '__main__':
+    update_fash_cards_gdrive()
