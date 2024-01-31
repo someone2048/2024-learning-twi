@@ -23,24 +23,34 @@ def fetch_notion_db(db_url, access_token):
             row = [notion_row['id']]
             for column in header[1:]:
                 field = notion_row['properties'][column]
-                if field['type'] in ('rich_text', 'title'):
-                    if not field[field['type']]:
-                        value = ""
-                    else:
-                        value = ''.join([rt['plain_text'] for rt in field[field['type']]])
-                elif field['type'] == 'select':
-                    if not field['select']:
-                        value = ""
-                    else:
-                        value = field['select']['name']
-                elif field['type'] == 'relation':
-                    value = [r['id'] for r in field['relation']]
-                elif field['type'] == 'checkbox':
-                    value = field['checkbox']
-                elif field['type'] == 'last_edited_time':
-                    value = datetime.fromisoformat(field['last_edited_time'][:-1])
-                else:
-                    raise TypeError("Unexpected field type")
+                match field['type']:
+                    case 'rich_text' | 'title':
+                        if field[field['type']]:
+                            value = ''.join([rt['plain_text'] for rt in field[field['type']]])
+                        else:
+                            value = ""
+                    case 'select':
+                        if field['select']:
+                            value = field['select']['name']
+                        else:
+                            value = ""
+                    case 'relation':
+                        value = [r['id'] for r in field['relation']]
+                    case 'checkbox':
+                        value = field['checkbox']
+                    case 'last_edited_time':
+                        value = datetime.fromisoformat(field['last_edited_time'][:-1])
+                    case 'files':
+                        if field['files']:
+                            raise NotImplementedError("Downloading files is not yet implemented")
+                        else:
+                            value = []
+                    case 'multi_select':
+                        value = field['multi_select']
+                        if len(value) > 0:
+                            value = [t['name'] for t in field['multi_select']]
+                    case _:
+                        raise TypeError("Unexpected field type")
                 row.append(value)
             database.append(row)
         if not db_query['has_more']:

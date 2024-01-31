@@ -58,7 +58,7 @@ def create_flashcard(df, word: str, language: str):
     if len(formatted_translations) > 1:
         back = ""
         for i, trans in enumerate(formatted_translations, 1):
-            back += f"<b>{i})</b> {trans}<br>"
+            back += f"<b>{i})</b> {trans}<br><br>"
     else:
         back = formatted_translations[0]
 
