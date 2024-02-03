@@ -23,7 +23,7 @@ def color_literal_translation(twi, eng_lit, word_match):
     # parsing twi
     twi_color = ""
     for twi_word, eng_word, highlight_color in replacements:
-        word_start = twi.find(twi_word)
+        word_start = twi.lower().find(twi_word.lower())
         if word_start == -1:
             print(f"WARNING: '{twi_word}' could not be found in '{twi}'!")
             continue
@@ -35,7 +35,7 @@ def color_literal_translation(twi, eng_lit, word_match):
     for twi_word, eng_word, highlight_color in sorted(replacements, key=lambda tup: len(tup[1]), reverse=True):
         initial = True
         while True:
-            pos = eng_lit.find(eng_word)
+            pos = eng_lit.lower().find(eng_word.lower())
             if pos == -1:
                 if initial:
                     print(f"WARNING: '{eng_word}' could not be found in '{eng_lit}' ({twi})!")
