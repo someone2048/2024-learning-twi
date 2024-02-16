@@ -1,7 +1,6 @@
-from read_db_notion import NOTION_DB, NOTION_TOKEN, fetch_notion_db
+from common.read_db_notion import NOTION_DB, NOTION_TOKEN, fetch_notion_db
 from create_fashcards import create_flashcards
-from drive_upload import update_fash_cards_gdrive
-from utils import preprocess_twi
+from common.drive_upload import update_fash_cards_gdrive
 
 if __name__ == '__main__':
     print("fetching notion database")

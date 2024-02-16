@@ -1,7 +1,7 @@
 import genanki
 import pandas as pd
-from src.read_db_notion import fetch_notion_db, NOTION_DB, NOTION_TOKEN
-from utils import parse_word_match
+from common.read_db_notion import fetch_notion_db, NOTION_DB, NOTION_TOKEN
+from common.utils import parse_word_match
 
 
 def color_literal_translation(twi, eng_lit, word_match):
