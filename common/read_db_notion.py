@@ -3,13 +3,7 @@ import pandas as pd
 from notion_client import Client
 from datetime import datetime
 
-from utils import preprocess_twi
-
-
-with open("notion_secrets.json") as f:
-    j = json.load(f)
-    NOTION_TOKEN = j["notion_token"]
-    NOTION_DB = j["notion_db"]
+from common.utils import preprocess_twi
 
 
 def fetch_notion_db(db_url, access_token):
@@ -42,7 +36,8 @@ def fetch_notion_db(db_url, access_token):
                         value = datetime.fromisoformat(field['last_edited_time'][:-1])
                     case 'files':
                         if field['files']:
-                            raise NotImplementedError("Downloading files is not yet implemented")
+                            value = ""  # TODO
+                            # raise NotImplementedError("Downloading files is not yet implemented")
                         else:
                             value = []
                     case 'multi_select':
@@ -62,7 +57,12 @@ def fetch_notion_db(db_url, access_token):
 
 
 if __name__ == "__main__":
-    df = fetch_notion_db(NOTION_DB, NOTION_TOKEN)
+    with open("../files/secrets/notion_secrets.json") as f:
+        j = json.load(f)
+        notion_token = j["notion_token"]
+        notion_db = j["notion_db"]
+        
+    df = fetch_notion_db(notion_db, notion_token)
     print(f"Retrieved {len(df)} rows!\n")
     print(df)
 

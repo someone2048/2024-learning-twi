@@ -4,40 +4,30 @@ from datetime import datetime
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 
-TOKEN_FILE_PATH = "gdrive_secrets.json"
 
-
-def authenticate_drive():
+def gdrive_authenticate(gdrive_secrets, client_secrets):
     gauth = GoogleAuth()
 
-    # Check if the token file exists
-    if os.path.exists(TOKEN_FILE_PATH):
-        gauth.LoadCredentialsFile(TOKEN_FILE_PATH)
-    else:
+    # Specify the path to your client secrets file
+    gauth.DEFAULT_SETTINGS['client_config_file'] = client_secrets
+    gauth.LoadCredentialsFile(gdrive_secrets)  # Try to load saved client credentials
+    if gauth.credentials is None:
+        # Authenticate if they're not there
         gauth.LocalWebserverAuth()
-        # Save the credentials to a file for future use
-        gauth.SaveCredentialsFile(TOKEN_FILE_PATH)
+    elif gauth.access_token_expired:
+        # Refresh them if expired
+        gauth.Refresh()
+    else:
+        # Initialize the saved credentials
+        gauth.Authorize()
+    gauth.SaveCredentialsFile()
 
     drive = GoogleDrive(gauth)
     return drive
 
 
-# Function to upload a new version of the file to Google Drive
-def update_drive_file(drive, file_id, local_file_path):
-    file_drive = drive.CreateFile({'id': file_id,
-                                   'title': f"flashcards-v{datetime.now().strftime('%Y%m%d')}.apkg"})
-    file_drive.SetContentFile(local_file_path)
-    file_drive.Upload()
+def gdrive_update_file(drive, file_id, local_path, new_remote_name):
+   file_drive = drive.CreateFile({'id': file_id, 'title': new_remote_name})
+   file_drive.SetContentFile(local_path)
+   file_drive.Upload()
 
-
-def update_fash_cards_gdrive():
-    file_id = "1nSz20dpnDIetmNATmfs-es25ZA8N3xTx"
-    local_file_path = "flashcards.apkg"
-    # Authenticate with Google Drive
-    drive = authenticate_drive()
-    # Update the file on Google Drive with a new version
-    update_drive_file(drive, file_id, local_file_path)
-
-
-if __name__ == '__main__':
-    update_fash_cards_gdrive()

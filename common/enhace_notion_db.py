@@ -1,6 +1,7 @@
-from read_db_notion import *
+from anki_flashcards.create_fashcards import color_literal_translation
+from common.read_db_notion import *
 
-from utils import parse_word_match
+from common.utils import parse_word_match
 
 
 def recommend_examples(df: pd.DataFrame):
@@ -22,19 +23,13 @@ def recommend_examples(df: pd.DataFrame):
                         print(f"{row['twi']}({row['english']}) -> {row2['twi']} MATCH: TWI (only)")
 
 
-def check_for_malformed_entries(df: pd.DataFrame):
+def verify_database(df: pd.DataFrame) -> dict[int, str]:
+    log = {}
     for i, row in df.iterrows():
-
         if not row["type"] or not row["twi"] or not row["english"]:
-            print(f"MISSING KEY FIELD: {i}) {row['twi']}->{row['english']}")
-
+            log[i] = f"MISSING KEY FIELD: \"{row['twi']}\" -> \"{row['english']}\""
         try:
-            parse_word_match(row["word_match"])
+            color_literal_translation(row["twi"], row["english_literal"], row["word_match"])
         except Exception:
-            print(f"WORD MATCH PARSING FAILURE: {i}) {row['twi']}->{row['english']}")
-
-
-if __name__ == '__main__':
-    df = fetch_notion_db(NOTION_DB, NOTION_TOKEN)
-    check_for_malformed_entries(df)
-    recommend_examples(df)
+            log[i] = f"WORD MATCH PARSING FAILURE: \"{row['twi']}\" -> \"{row['english']}\""
+    return log

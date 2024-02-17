@@ -1,6 +1,5 @@
 import genanki
 import pandas as pd
-from common.read_db_notion import fetch_notion_db, NOTION_DB, NOTION_TOKEN
 from common.utils import parse_word_match
 
 
@@ -118,7 +117,3 @@ def create_flashcards(df: pd.DataFrame, out_path):
     anki_deck.write_to_file(out_path)
     return cards_count
 
-
-if __name__ == '__main__':
-    df = fetch_notion_db(NOTION_DB, NOTION_TOKEN)
-    create_flashcards(df, "flashcards_test.apkg")

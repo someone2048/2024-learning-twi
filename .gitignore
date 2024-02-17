@@ -1,6 +1,7 @@
 
 /.idea
 /.venv
+/files
 **.apkg
 **.csv
 **.pkl
