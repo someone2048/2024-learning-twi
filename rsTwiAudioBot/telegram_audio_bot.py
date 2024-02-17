@@ -16,7 +16,7 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-AUDIO_MANAGER = AudioManager("files/word_list.txt", "files/audio")
+AUDIO_MANAGER = AudioManager("files/twi_vocabulary_df_latest.pkl", "files/audio")
 USER_MANAGER = UserContextManager()
 
 with open("files/secrets/telegram_secrets.json", "r") as f:
@@ -105,12 +105,11 @@ async def handler_voice_message(update: Update, context: ContextTypes.DEFAULT_TY
 
 @privileged
 async def action_send_word(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    words = list(AUDIO_MANAGER.words_no_audio)
-    if len(words) == 0:
+    word = AUDIO_MANAGER.get_word()
+    if word is None:
         await context.bot.send_message(chat_id=update.effective_chat.id,
                                        text=f"There are currently no words or phrases that don't have an audio recording...",
                                        parse_mode=ParseMode.MARKDOWN)
-    word = random.choice(words)
     USER_MANAGER.set_word(update.effective_chat.id, word)
     await context.bot.send_message(chat_id=update.effective_chat.id, text=f"*{word}*", parse_mode=ParseMode.MARKDOWN)
 
