@@ -1,8 +1,6 @@
 import functools
 import io
 import json
-import logging
-import random
 
 import requests
 from telegram import Update
@@ -11,12 +9,7 @@ from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, Messa
 
 from rsTwiAudioBot.managers import AudioManager, UserContextManager
 
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
-
-AUDIO_MANAGER = AudioManager("files/twi_vocabulary_df_latest.pkl", "files/audio")
+AUDIO_MANAGER = AudioManager("files/twi_vocabulary_df_latest.pkl", "files/public/audio")
 USER_MANAGER = UserContextManager()
 
 with open("files/secrets/telegram_secrets.json", "r") as f:
@@ -67,8 +60,6 @@ async def command_auth(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 @privileged
 async def command_save(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    logging.info(f"{update.effective_chat.id} /save")
-
     word = USER_MANAGER.get_word(update.effective_chat.id)
     audio = USER_MANAGER.get_audio(update.effective_chat.id)
     if audio:
@@ -92,7 +83,6 @@ async def command_save(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 @privileged
 async def command_skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    logging.info(f"{update.effective_chat.id} /skip")
     await action_send_word(update, context)
 
 
@@ -100,7 +90,6 @@ async def command_skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handler_voice_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     file_link = (await update.message.effective_attachment.get_file()).file_path
     USER_MANAGER.set_audio(update.effective_chat.id, file_link)
-    logging.info(f"{update.effective_chat.id} [voice message received]")
 
 
 @privileged

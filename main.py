@@ -1,11 +1,8 @@
 import json
-import pickle
-from datetime import datetime
-
+import os
 import pandas as pd
 
 from anki_flashcards.create_fashcards import create_flashcards
-from common.drive_upload import gdrive_update_file, gdrive_authenticate
 from common.read_db_notion import fetch_notion_db
 from common.enhace_notion_db import verify_database
 
@@ -29,7 +26,8 @@ def update_everything():
         assert len(verify_database(df)) == 0
 
     # # # # SAVING LATEST CLEAN DATAFRAME # # # #
-    if df.equals(pd.read_pickle("files/twi_vocabulary_df_latest.pkl")):
+    if os.path.exists("files/twi_vocabulary_df_latest.pkl") and \
+            df.equals(pd.read_pickle("files/twi_vocabulary_df_latest.pkl")):
         print("df identical to last run... quitting...")
         return
     df.to_pickle(f"files/twi_vocabulary_df_latest.pkl")
@@ -38,13 +36,7 @@ def update_everything():
     # TODO add new audio to database
 
     # # # # CREATING ANKI FLASHCARDS & UPLOADING THEM # # # #
-    create_flashcards(df, "files/flashcards.apkg")
-    gdrive = gdrive_authenticate("files/secrets/gdrive_secrets.json",
-                                 "files/secrets/client_secrets.json")
-    gdrive_update_file(gdrive,
-                       "1nSz20dpnDIetmNATmfs-es25ZA8N3xTx",
-                       "files/flashcards.apkg",
-                       f"flashcards-v{datetime.now().strftime('%Y%m%d')}.apkg")
+    create_flashcards(df, "files/public/flashcards.apkg")
 
 
 if __name__ == '__main__':

@@ -14,7 +14,6 @@ def color_literal_translation(twi, eng_lit, word_match):
         "lightcoral",
         "darkred"
     ]
-    # random.shuffle(highlight_colors)
 
     replacements = parse_word_match(word_match)
     replacements = [(*r, highlight_colors[i % len(highlight_colors)]) for i, r in enumerate(replacements)]

@@ -73,7 +73,7 @@ class UserContextManager:
 
 
 if __name__ == '__main__':
-    AudioManager("../files/twi_vocabulary_df_latest.pkl", "../files/audio")
+    AudioManager("../files/twi_vocabulary_df_latest.pkl", "../files/public/audio")
 
 
 
