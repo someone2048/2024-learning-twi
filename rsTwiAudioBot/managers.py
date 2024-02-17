@@ -61,21 +61,23 @@ class UserContextManager:
                 "current_audio": None
             }
 
-    def set_word(self, uid, word):
+    def authenticate(self, uid):
         self.__create_if_not_exists(uid)
+
+    def is_authenticated(self, uid):
+        return uid in self.__users_contexts
+
+    def set_word(self, uid, word):
         self.__users_contexts[uid]["current_word"] = word
         self.__users_contexts[uid]["current_audio"] = None
 
     def set_audio(self, uid, audio):
-        self.__create_if_not_exists(uid)
         self.__users_contexts[uid]["current_audio"] = audio
 
     def get_audio(self, uid):
-        self.__create_if_not_exists(uid)
         return self.__users_contexts[uid]["current_audio"]
 
     def get_word(self, uid):
-        self.__create_if_not_exists(uid)
         return self.__users_contexts[uid]["current_word"]
 
 

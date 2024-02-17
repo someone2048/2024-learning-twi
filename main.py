@@ -1,6 +1,8 @@
 import json
+import pickle
 from datetime import datetime
-from pandas import DataFrame
+
+import pandas as pd
 
 from anki_flashcards.create_fashcards import create_flashcards
 from common.drive_upload import gdrive_update_file, gdrive_authenticate
@@ -26,8 +28,14 @@ def update_everything():
         df.reset_index(drop=True, inplace=True)
         assert len(verify_database(df)) == 0
 
+    # # # # SAVING LATEST CLEAN DATAFRAME # # # #
+    if df.equals(pd.read_pickle("files/twi_vocabulary_df_latest.pkl")):
+        print("df identical to last run... quitting...")
+        return
+    df.to_pickle(f"files/twi_vocabulary_df_latest.pkl")
+
     # TODO fix obvious errors
-    # TODO add new words to database
+    # TODO add new audio to database
 
     # # # # CREATING ANKI FLASHCARDS & UPLOADING THEM # # # #
     create_flashcards(df, "files/flashcards.apkg")
