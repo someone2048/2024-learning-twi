@@ -26,19 +26,20 @@ def update_everything():
         assert len(verify_database(df)) == 0
 
     # # # # SAVING LATEST CLEAN DATAFRAME # # # #
-    if os.path.exists("files/twi_vocabulary_df_latest.pkl") and \
-            df.equals(pd.read_pickle("files/twi_vocabulary_df_latest.pkl")):
-        print("df identical to last run... quitting...")
-        return
+    # if os.path.exists("files/twi_vocabulary_df_latest.pkl") and \
+    #         df.equals(pd.read_pickle("files/twi_vocabulary_df_latest.pkl")):
+    #     print("df identical to last run... quitting...")
+    #     return
     df.to_pickle(f"files/twi_vocabulary_df_latest.pkl")
 
     # TODO fix obvious errors
     # TODO add new audio to database
 
-    # # # # CREATING ANKI FLASHCARDS & UPLOADING THEM # # # #
-    create_flashcards(df, "files/public/flashcards.apkg")
+    # # # # CREATING ANKI FLASHCARDS # # # #
+    create_flashcards(df, "files/public/flashcards.apkg", "files/public/audio")
 
 
 if __name__ == '__main__':
     update_everything()
+
 
