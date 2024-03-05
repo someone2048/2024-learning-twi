@@ -24,3 +24,10 @@ def preprocess_twi(database: list[list[str]]):
             row[col] = row[col].replace(")", "ɔ")
             row[col] = row[col].replace("3", "ɛ")
     return database
+
+
+def sanitized_filename(word: str) -> str:
+    word = word.lower().strip()
+    word = word.replace(" ", "_")
+    word = "".join([c for c in word if c in "abcdeɛfghijklmnoɔpqrstuvwxyz0123456789_"])
+    return word

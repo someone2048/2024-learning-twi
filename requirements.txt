@@ -1,2 +1,8 @@
 notion-client
 genanki
+pandas
+PyDrive2
+python-telegram-bot
+pydub
+pyarrow
+requests

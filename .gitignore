@@ -1,6 +1,8 @@
 
 /.idea
 /.venv
-*.apkg
-*.csv
+/files
+**.apkg
+**.csv
+**.pkl
 **secrets.json
