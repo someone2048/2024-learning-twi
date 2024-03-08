@@ -28,8 +28,12 @@ def verify_database(df: pd.DataFrame) -> dict[int, str]:
     for i, row in df.iterrows():
         if not row["type"] or not row["twi"] or not row["english"]:
             log[i] = f"MISSING KEY FIELD: \"{row['twi']}\" -> \"{row['english']}\""
-        try:
-            color_literal_translation(row["twi"], row["english_literal"], row["word_match"])
-        except Exception:
-            log[i] = f"WORD MATCH PARSING FAILURE: \"{row['twi']}\" -> \"{row['english']}\""
+        if word_match := row["word_match"]:
+            english_literal = row["english_literal"]
+            if not english_literal:
+                english_literal = row["english"]
+            try:
+                color_literal_translation(row["twi"], english_literal, word_match)
+            except Exception as e:
+                log[i] = f"WORD MATCH PARSING FAILURE: \"{row['twi']}\" -> \"{row['english']}\" ({e})"
     return log

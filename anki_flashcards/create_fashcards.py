@@ -27,8 +27,7 @@ def color_literal_translation(twi, eng_lit, word_match):
     for twi_word, eng_word, highlight_color in replacements:
         word_start = twi.lower().find(twi_word.lower())
         if word_start == -1:
-            print(f"WARNING: '{twi_word}' could not be found in '{twi}'!")
-            continue
+            raise ValueError(f"'{twi_word}' could not be found in '{twi}'!")
         twi_color += twi[:word_start] + f"<span style='color:{highlight_color}'>{twi_word}</span>"  # f"[{twi_word}]"
         twi = twi[word_start + len(twi_word):]
     twi_color += twi
@@ -40,7 +39,7 @@ def color_literal_translation(twi, eng_lit, word_match):
             pos = eng_lit.lower().find(eng_word.lower())
             if pos == -1:
                 if initial:
-                    print(f"WARNING: '{eng_word}' could not be found in '{eng_lit}' ({twi})!")
+                    raise ValueError(f"'{eng_word}' could not be found in '{eng_lit}' ({twi})!")
                 break
             initial = False
             eng_word_color = f"<span style='color:{highlight_color}'>{eng_word}</span>"
@@ -111,8 +110,10 @@ def format_translation(df, row_index: int, translation_language: str) -> str:
     if examples:
         translation += f"<br><br><i><b>Examples:</b></i>"
         for example_id in examples:
-            example_index = df.index[df["id"] == example_id][0]
-            translation += f"<br>{df.iloc[example_index]['twi']} → {df.iloc[example_index]['english']}"
+            example_index = df.index[df["id"] == example_id]
+            if len(example_index) > 0:
+                example_index = example_index[0]
+                translation += f"<br>{df.iloc[example_index]['twi']} → {df.iloc[example_index]['english']}"
 
     return translation
 
