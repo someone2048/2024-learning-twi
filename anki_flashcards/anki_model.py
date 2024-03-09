@@ -12,6 +12,7 @@ LANGUAGE_MODEL = genanki.Model(
     1498237801,
     'Language Model',
     fields=[
+        {'name': 'Id'},
         {'name': 'Question', 'font': 'Arial'},
         {'name': 'Answer', 'font': 'Arial'},
         {'name': 'Audio'},

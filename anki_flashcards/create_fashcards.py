@@ -126,7 +126,7 @@ def create_flashcards(df: pd.DataFrame, out_path, audio_dir):
             front, back, audio, tags = create_flashcard(df, word, language, audio_dir)
             twi_english = LanguageNote(
                 model=LANGUAGE_MODEL,
-                fields=[front, back, audio],
+                fields=[word, front, back, audio],
                 tags=tags
             )
             anki_deck.add_note(twi_english)
