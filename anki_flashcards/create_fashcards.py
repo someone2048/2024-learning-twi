@@ -4,8 +4,8 @@ import genanki
 import pandas as pd
 
 from anki_flashcards.anki_model import LanguageNote, LANGUAGE_MODEL
+from anki_flashcards.dependency_analysis import count_word_occurrences
 from common.utils import parse_word_match, sanitized_filename
-
 
 def color_literal_translation(twi, eng_lit, word_match):
     highlight_colors = [
@@ -70,7 +70,7 @@ def create_flashcard(df, word: str, language: str, audio_dir: str):
         front = f"{word}"
         back = formatted_translations[0]
 
-    tags = [f"{language}", df.iloc[translation_loc]["type"].values[0]]
+    tags = [f"{language}", df.loc[translation_loc]["type"].values[0]]
 
     audio_file_name = f"{sanitized_filename(word)}.mp3"
     if os.path.isfile(os.path.join(audio_dir, audio_file_name)):
@@ -88,48 +88,53 @@ def format_translation(df, row_index: int, translation_language: str) -> str:
     :param translation_language: language of the translation.
     :return: translation as html
     """
-    translation = df.iloc[row_index][translation_language]
+    translation = df.loc[row_index][translation_language]
 
-    twi = df.iloc[row_index]["twi"]
-    english_literal = df.iloc[row_index]["english_literal"]
-    word_match = df.iloc[row_index]["word_match"]
+    twi = df.loc[row_index]["twi"]
+    english_literal = df.loc[row_index]["english_literal"]
+    word_match = df.loc[row_index]["word_match"]
 
     if word_match:
         if not english_literal:
-            english_literal = df.iloc[row_index]["english"]
+            english_literal = df.loc[row_index]["english"]
         twi_color, eng_lit_color = color_literal_translation(twi, english_literal, word_match)
         translation += f"<br><br><i>lit.:</i> {eng_lit_color}<br>{twi_color}"
     elif english_literal:
         translation += f"<br><br><i>lit.:</i> {english_literal}"
 
-    note = df.iloc[row_index]["note"]
+    note = df.loc[row_index]["note"]
     if note:
         translation += f"<br><br><i style='color: lightslategray'>{note}</i>"
 
-    examples = df.iloc[row_index]["examples"]
+    examples = df.loc[row_index]["examples"]
     if examples:
         translation += f"<br><br><i><b>Examples:</b></i>"
         for example_id in examples:
             example_index = df.index[df["id"] == example_id]
             if len(example_index) > 0:
                 example_index = example_index[0]
-                translation += f"<br>{df.iloc[example_index]['twi']} → {df.iloc[example_index]['english']}"
+                translation += f"<br>{df.loc[example_index]['twi']} → {df.loc[example_index]['english']}"
 
     return translation
 
 
 def create_flashcards(df: pd.DataFrame, out_path, audio_dir):
+    def sort_key_func(row):
+        return count_word_occurrences(row["twi"], df, "twi") + 1 - len(row["twi"]) / 100
+    df['sort_key'] = df.apply(sort_key_func, axis=1)
+    df.sort_values(by='sort_key', ascending=False, inplace=True)
+
     anki_deck = genanki.Deck(1550882594, "Twi")
     cards_count = 0
     for language in ["twi", "english"]:
         for word in df[language].unique():
             front, back, audio, tags = create_flashcard(df, word, language, audio_dir)
-            twi_english = LanguageNote(
+            card = LanguageNote(
                 model=LANGUAGE_MODEL,
                 fields=[word, front, back, audio],
                 tags=tags
             )
-            anki_deck.add_note(twi_english)
+            anki_deck.add_note(card)
             cards_count += 1
             # print(f"<h3>{front}</h3><p>{back}</p>")
     anki_package = genanki.Package(anki_deck)
@@ -138,3 +143,7 @@ def create_flashcards(df: pd.DataFrame, out_path, audio_dir):
     anki_package.write_to_file(out_path)
     return cards_count
 
+
+if __name__ == '__main__':
+    df = pd.read_pickle("../files/twi_vocabulary_df_latest.pkl")
+    create_flashcards(df, "../files/public/flashcards.apkg", "../files/public/audio")
