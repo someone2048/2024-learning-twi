@@ -7,6 +7,7 @@ from anki_flashcards.anki_model import LanguageNote, LANGUAGE_MODEL
 from anki_flashcards.dependency_analysis import count_word_occurrences
 from common.utils import parse_word_match, sanitized_filename
 
+
 def color_literal_translation(twi, eng_lit, word_match):
     highlight_colors = [
         "gold",
@@ -77,7 +78,13 @@ def create_flashcard(df, word: str, language: str, audio_dir: str):
         audio = f"[sound:{audio_file_name}]"
     else:
         audio = ""
-    return front, back, audio, tags
+
+    card = LanguageNote(
+        model=LANGUAGE_MODEL,
+        fields=[word, front, back, audio],
+        tags=tags
+    )
+    return card
 
 
 def format_translation(df, row_index: int, translation_language: str) -> str:
@@ -121,22 +128,29 @@ def format_translation(df, row_index: int, translation_language: str) -> str:
 def create_flashcards(df: pd.DataFrame, out_path, audio_dir):
     def sort_key_func(row):
         return count_word_occurrences(row["twi"], df, "twi") + 1 - len(row["twi"]) / 100
+
     df['sort_key'] = df.apply(sort_key_func, axis=1)
     df.sort_values(by='sort_key', ascending=False, inplace=True)
 
     anki_deck = genanki.Deck(1550882594, "Twi")
     cards_count = 0
+    words_eng = []
     for language in ["twi", "english"]:
         for word in df[language].unique():
-            front, back, audio, tags = create_flashcard(df, word, language, audio_dir)
-            card = LanguageNote(
-                model=LANGUAGE_MODEL,
-                fields=[word, front, back, audio],
-                tags=tags
-            )
+            if language == "english" and word in words_eng:
+                continue
+            print(word)
+            card = create_flashcard(df, word, language, audio_dir)
             anki_deck.add_note(card)
             cards_count += 1
-            # print(f"<h3>{front}</h3><p>{back}</p>")
+            if language == "twi":
+                eng_translations = df[df["twi"] == word]["english"].tolist()
+                for eng_translation in eng_translations:
+                    print(f"  {eng_translation}")
+                    card = create_flashcard(df, eng_translation, "english", audio_dir)
+                    anki_deck.add_note(card)
+                    cards_count += 1
+                    words_eng.append(eng_translation)
     anki_package = genanki.Package(anki_deck)
     anki_package.media_files = [os.path.join(audio_dir, f) for f in os.listdir(audio_dir)]
 
@@ -146,4 +160,5 @@ def create_flashcards(df: pd.DataFrame, out_path, audio_dir):
 
 if __name__ == '__main__':
     df = pd.read_pickle("../files/twi_vocabulary_df_latest.pkl")
-    create_flashcards(df, "../files/public/flashcards.apkg", "../files/public/audio")
+    count = create_flashcards(df, "../files/public/flashcards.apkg", "../files/public/audio")
+    print(f"Created {count} flashcards!")
