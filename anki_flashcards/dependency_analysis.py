@@ -3,7 +3,8 @@ import pandas as pd
 from common.utils import sanitized_filename
 
 
-def word_frequencies(df, column):
+def pseudo_word_frequencies(df, column):
+    """Assumes that everything delimited by a space ia a word"""
     words = []
     for word_str in df[column]:
         word_str = sanitized_filename(word_str)
@@ -28,10 +29,20 @@ def count_word_occurrences(word_str, df, word_column):
     return len(filtered_df)
 
 
+def pprint_word_frequencies(word_freq, df, word_column):
+    for word, count in word_freq:
+        print(f"{word} ({count})")
+        simplified_word = sanitized_filename(word)
+        filtered_df = df[df[word_column].apply(
+            lambda x: simplified_word in sanitized_filename(x))]
+        for i, row in filtered_df.iterrows():
+            print(f"  {row['twi']} --> {row['english']}")
+
+
 if __name__ == '__main__':
     def main():
         df = pd.read_pickle("../files/twi_vocabulary_df_latest.pkl")
-        twi_freq = word_frequencies(df, 'twi')
+        twi_freq = pseudo_word_frequencies(df, 'twi')
         print(len(twi_freq))
         print(twi_freq)
         twi_freq = drop_translated_words(df, "twi", twi_freq)
@@ -40,9 +51,11 @@ if __name__ == '__main__':
 
         print("\n" + "-"*50 + "\n")
 
-        eng_freq = word_frequencies(df, 'english')
+        eng_freq = pseudo_word_frequencies(df, 'english')
         print(eng_freq)
         eng_freq = drop_translated_words(df, "english", eng_freq)
         print(eng_freq)
+
+        pprint_word_frequencies(twi_freq, df, "twi")
 
     main()

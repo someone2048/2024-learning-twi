@@ -50,43 +50,6 @@ def color_literal_translation(twi, eng_lit, word_match):
     return twi_color, eng_lit_color
 
 
-def create_flashcard(df, word: str, language: str, audio_dir: str):
-    """
-    generates an anki flashcard for a given word
-    :param: df: df
-    :param: word: the word to generate a flashcard for (front of the card)
-    :param: language: the language of the word
-    """
-    languages = ["twi", "english"]
-    translation_language = languages[languages.index(language) - 1]
-    translation_loc = df.index[df[language] == word]
-    formatted_translations = [format_translation(df, loc, translation_language) for loc in translation_loc]
-
-    if len(formatted_translations) > 1:
-        front = f"{word} ({len(formatted_translations)})"
-        back = ""
-        for i, trans in enumerate(formatted_translations, 1):
-            back += f"<b>{i})</b> {trans}<br><br>"
-    else:
-        front = f"{word}"
-        back = formatted_translations[0]
-
-    tags = [f"{language}", df.loc[translation_loc]["type"].values[0]]
-
-    audio_file_name = f"{sanitized_filename(word)}.mp3"
-    if os.path.isfile(os.path.join(audio_dir, audio_file_name)):
-        audio = f"[sound:{audio_file_name}]"
-    else:
-        audio = ""
-
-    card = LanguageNote(
-        model=LANGUAGE_MODEL,
-        fields=[word, front, back, audio],
-        tags=tags
-    )
-    return card
-
-
 def format_translation(df, row_index: int, translation_language: str) -> str:
     """
     Generates the text for a single translation of a given word/phrase
@@ -115,14 +78,52 @@ def format_translation(df, row_index: int, translation_language: str) -> str:
 
     examples = df.loc[row_index]["examples"]
     if examples:
-        translation += f"<br><br><i><b>Examples:</b></i>"
+        translation += f"<br><br><div style='color: lightslategray'><i><b>Examples:</b></i>"
         for example_id in examples:
             example_index = df.index[df["id"] == example_id]
             if len(example_index) > 0:
                 example_index = example_index[0]
                 translation += f"<br>{df.loc[example_index]['twi']} → {df.loc[example_index]['english']}"
+        translation += "</div>"
 
     return translation
+
+
+def create_flashcard(df, word: str, language: str, audio_dir: str):
+    """
+    generates an anki flashcard for a given word
+    :param: df: df
+    :param: word: the word to generate a flashcard for (front of the card)
+    :param: language: the language of the word
+    """
+    languages = ["twi", "english"]
+    translation_language = languages[languages.index(language) - 1]
+    translation_loc = df.index[df[language] == word]
+    formatted_translations = sorted([format_translation(df, loc, translation_language) for loc in translation_loc])
+
+    if len(formatted_translations) > 1:
+        front = f"{word} ({len(formatted_translations)})"
+        back = ""
+        for i, trans in enumerate(formatted_translations, 1):
+            back += f"<b>{i})</b> {trans}<br><br>"
+    else:
+        front = f"{word}"
+        back = formatted_translations[0]
+
+    tags = [f"{language}", df.loc[translation_loc]["type"].values[0]]
+
+    audio_file_name = f"{sanitized_filename(word)}.mp3"
+    if os.path.isfile(os.path.join(audio_dir, audio_file_name)):
+        audio = f"[sound:{audio_file_name}]"
+    else:
+        audio = ""
+
+    card = LanguageNote(
+        model=LANGUAGE_MODEL,
+        fields=[word, front, back, audio],
+        tags=tags
+    )
+    return card
 
 
 def create_flashcards(df: pd.DataFrame, out_path, audio_dir):
@@ -139,14 +140,14 @@ def create_flashcards(df: pd.DataFrame, out_path, audio_dir):
         for word in df[language].unique():
             if language == "english" and word in words_eng:
                 continue
-            print(word)
             card = create_flashcard(df, word, language, audio_dir)
             anki_deck.add_note(card)
             cards_count += 1
             if language == "twi":
                 eng_translations = df[df["twi"] == word]["english"].tolist()
                 for eng_translation in eng_translations:
-                    print(f"  {eng_translation}")
+                    if eng_translation in words_eng:
+                        continue
                     card = create_flashcard(df, eng_translation, "english", audio_dir)
                     anki_deck.add_note(card)
                     cards_count += 1
