@@ -50,15 +50,25 @@ def color_literal_translation(twi, eng_lit, word_match):
     return twi_color, eng_lit_color
 
 
-def format_translation(df, row_index: int, translation_language: str) -> str:
+def audio_or_empty_str(audio_dir, word):
+    audio_file_name = f"{sanitized_filename(word)}.mp3"
+    if os.path.isfile(os.path.join(audio_dir, audio_file_name)):
+        return f"[sound:{audio_file_name}]"
+    return ""
+
+
+def format_translation(df, row_index: int, translation_language: str, audio_dir: str) -> str:
     """
     Generates the text for a single translation of a given word/phrase
     :param df: df
     :param row_index: row index of the translation in the df
     :param translation_language: language of the translation.
+    :param audio_dir: the directory containing the audio files
     :return: translation as html
     """
     translation = df.loc[row_index][translation_language]
+    if translation_language == "twi":
+        translation += audio_or_empty_str(audio_dir, translation)
 
     twi = df.loc[row_index]["twi"]
     english_literal = df.loc[row_index]["english_literal"]
@@ -83,7 +93,8 @@ def format_translation(df, row_index: int, translation_language: str) -> str:
             example_index = df.index[df["id"] == example_id]
             if len(example_index) > 0:
                 example_index = example_index[0]
-                translation += f"<br>{df.loc[example_index]['twi']} → {df.loc[example_index]['english']}"
+                twi_example = df.loc[example_index]['twi']
+                translation += f"<br>{twi_example} → {df.loc[example_index]['english']}{audio_or_empty_str(audio_dir, twi_example)}"
         translation += "</div>"
 
     return translation
@@ -99,7 +110,7 @@ def create_flashcard(df, word: str, language: str, audio_dir: str):
     languages = ["twi", "english"]
     translation_language = languages[languages.index(language) - 1]
     translation_loc = df.index[df[language] == word]
-    formatted_translations = sorted([format_translation(df, loc, translation_language) for loc in translation_loc])
+    formatted_translations = sorted([format_translation(df, loc, translation_language, audio_dir) for loc in translation_loc])
 
     if len(formatted_translations) > 1:
         front = f"{word} ({len(formatted_translations)})"
@@ -112,11 +123,9 @@ def create_flashcard(df, word: str, language: str, audio_dir: str):
 
     tags = [f"{language}", df.loc[translation_loc]["type"].values[0]]
 
-    audio_file_name = f"{sanitized_filename(word)}.mp3"
-    if os.path.isfile(os.path.join(audio_dir, audio_file_name)):
-        audio = f"[sound:{audio_file_name}]"
-    else:
-        audio = ""
+    audio = ""
+    if language == "twi":
+        audio = audio_or_empty_str(audio_dir, word)
 
     card = LanguageNote(
         model=LANGUAGE_MODEL,
@@ -133,7 +142,7 @@ def create_flashcards(df: pd.DataFrame, out_path, audio_dir):
     df['sort_key'] = df.apply(sort_key_func, axis=1)
     df.sort_values(by='sort_key', ascending=False, inplace=True)
 
-    anki_deck = genanki.Deck(1550882594, "Twi")
+    anki_deck = genanki.Deck(1550882594, "Active::Twi")
     cards_count = 0
     words_eng = []
     for language in ["twi", "english"]:

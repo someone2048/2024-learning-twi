@@ -52,6 +52,15 @@ def main(video_path, start_time=0, min_silence_len=1000, silence_thresh=-50):
         min_silence_len (int, optional): Minimum silence length in milliseconds. Defaults to 1000.
         silence_thresh (int, optional): Silence threshold in dB. Defaults to -50.
     """
+
+    # fetching df
+    with open(os.path.join(FILES_DIR, "secrets/notion_secrets.json")) as f:
+        j = json.load(f)
+        notion_token = j["notion_token"]
+        notion_db = j["notion_db"]
+    df = fetch_notion_db(notion_db, notion_token)
+    df.to_pickle(os.path.join(FILES_DIR, f"twi_vocabulary_df_latest.pkl"))
+
     full_video = VideoFileClip(video_path)
     full_audio = AudioSegment.from_file(video_path)
 
@@ -70,12 +79,6 @@ def main(video_path, start_time=0, min_silence_len=1000, silence_thresh=-50):
 
 if __name__ == "__main__":
     try:
-        with open(os.path.join(FILES_DIR, "secrets/notion_secrets.json")) as f:
-            j = json.load(f)
-            notion_token = j["notion_token"]
-            notion_db = j["notion_db"]
-        df = fetch_notion_db(notion_db, notion_token)
-        df.to_pickle(os.path.join(FILES_DIR, f"twi_vocabulary_df_latest.pkl"))
         main()
     except KeyboardInterrupt:
         pass
